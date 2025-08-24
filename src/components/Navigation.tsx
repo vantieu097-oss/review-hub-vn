@@ -1,9 +1,18 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Star } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, Star } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, profile, signOut } = useAuth();
 
   const navItems = [
     { label: "Trang chủ", href: "#home" },
@@ -38,6 +47,39 @@ export const Navigation = () => {
                 {item.label}
               </a>
             ))}
+            
+            {user ? (
+              <div className="flex items-center space-x-4">
+                {profile?.role === 'admin' && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <User className="w-4 h-4 mr-2" />
+                      {profile?.full_name || user.email}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button variant="gradient" size="sm">
+                  Đăng nhập
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}

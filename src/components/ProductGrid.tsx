@@ -1,53 +1,54 @@
 import { ProductCard } from "./ProductCard";
-import headphonesImage from "@/assets/headphones.jpg";
-import smartphoneImage from "@/assets/smartphone.jpg";
-import laptopImage from "@/assets/laptop.jpg";
-import smartwatchImage from "@/assets/smartwatch.jpg";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const sampleProducts = [
-  {
-    title: "Sony WH-1000XM5 Wireless Headphones",
-    description: "Tai nghe chống ồn hàng đầu với chất lượng âm thanh tuyệt vời, pin 30 giờ và thiết kế thoải mái. Phù hợp cho công việc và giải trí.",
-    rating: 4.8,
-    price: "7.990.000₫",
-    originalPrice: "8.990.000₫",
-    image: headphonesImage,
-    affiliateLink: "https://example.com/headphones",
-    category: "Audio"
-  },
-  {
-    title: "iPhone 15 Pro Max 256GB",
-    description: "Smartphone cao cấp với chip A17 Pro, camera 48MP, titanium design. Màn hình 6.7 inch Super Retina XDR với Dynamic Island.",
-    rating: 4.7,
-    price: "34.990.000₫",
-    originalPrice: "36.990.000₫",
-    image: smartphoneImage,
-    affiliateLink: "https://example.com/iphone",
-    category: "Smartphone"
-  },
-  {
-    title: "MacBook Pro M3 14 inch",
-    description: "Laptop mạnh mẽ với chip M3, 16GB RAM, 512GB SSD. Màn hình Liquid Retina XDR 14 inch, pin 18 giờ. Hoàn hảo cho creative work.",
-    rating: 4.9,
-    price: "52.990.000₫",
-    originalPrice: "54.990.000₫", 
-    image: laptopImage,
-    affiliateLink: "https://example.com/macbook",
-    category: "Laptop"
-  },
-  {
-    title: "Apple Watch Series 9 GPS 45mm",
-    description: "Smartwatch thông minh với chip S9, màn hình Always-On Retina, theo dõi sức khỏe toàn diện và tính năng Double Tap mới.",
-    rating: 4.6,
-    price: "10.990.000₫",
-    originalPrice: "11.990.000₫",
-    image: smartwatchImage,
-    affiliateLink: "https://example.com/applewatch",
-    category: "Smartwatch"
-  }
-];
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+  affiliate_link: string;
+  category: string;
+  rating: number;
+  pros: string[];
+  cons: string[];
+  is_published: boolean;
+}
 
 export const ProductGrid = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-muted-foreground">Đang tải sản phẩm...</div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section id="products" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -61,11 +62,27 @@ export const ProductGrid = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sampleProducts.map((product, index) => (
-            <ProductCard key={index} {...product} />
-          ))}
-        </div>
+        {products.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                title={product.name}
+                description={product.description || ""}
+                image={product.image_url || "/placeholder.svg"}
+                rating={product.rating || 0}
+                price="" // Not used in current design
+                originalPrice="" // Not used in current design
+                affiliateLink={product.affiliate_link || "#"}
+                category={product.category || ""}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground">
+            <p>Chưa có sản phẩm nào được xuất bản.</p>
+          </div>
+        )}
         
         <div className="text-center mt-12">
           <p className="text-muted-foreground mb-4">
